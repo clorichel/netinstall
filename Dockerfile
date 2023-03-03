@@ -31,15 +31,15 @@ COPY --from=qemu /app/qemu-i386-static .
 ## Copy out the netinstall binary
 COPY --from=build /app .
 
-# perload matched versions of netinstall for RouterOS main packages
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm.npk /app/images/routeros-$NET_VERSION-arm.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm64.npk /app/images/routeros-$NET_VERSION-arm64.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mipsbe.npk /app/images/routeros-$NET_VERSION-mipsbe.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mmips.npk /app/images/routeros-$NET_VERSION-mmips.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-smips.npk /app/images/routeros-$NET_VERSION-smips.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-tile.npk /app/images/routeros-$NET_VERSION-tile.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-ppc.npk /app/images/routeros-$NET_VERSION-ppc.npk
-COPY https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION.npk /app/images/routeros-$NET_VERSION.npk
+# ADD matched versions of netinstall for RouterOS main packages
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm.npk /app/images/routeros-$NET_VERSION-arm.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm64.npk /app/images/routeros-$NET_VERSION-arm64.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mipsbe.npk /app/images/routeros-$NET_VERSION-mipsbe.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mmips.npk /app/images/routeros-$NET_VERSION-mmips.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-smips.npk /app/images/routeros-$NET_VERSION-smips.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-tile.npk /app/images/routeros-$NET_VERSION-tile.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-ppc.npk /app/images/routeros-$NET_VERSION-ppc.npk
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION.npk /app/images/routeros-$NET_VERSION.npk
 
 ## Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
