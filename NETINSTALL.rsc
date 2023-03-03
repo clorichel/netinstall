@@ -41,13 +41,13 @@
     :local containerbridge "bridge"
     :local containerpvid "2210"
     :local containerlogging "yes"
-    :local containerenvs [:toarray ""]
     :local maxwaitforstart "3m"
-    :set ($containerenvs->"NETINSTALL_NPK") "routeros-mipsbe-7.8.0.npk"
+    :local containerenvs [:toarray ""]
+    :set ($containerenvs->"NETINSTALL_NPK") "routeros-7.8-mipsbe.npk"
     
  
     :local containermounts [:toarray ""]
-    :set ($containermounts->"data") "/data"
+    #:set ($containermounts->"data") "/data"
  
     # TODO figure out where files go...
 
@@ -103,6 +103,7 @@
         :put "     containeraddresslist   =   $containeraddresslist      "         
         :put "     containerhostip        =   $containerhostip           "       
         :put "     containerbridge        =   $containerbridge           "    
+        :put "     containerpvid          =   $containerpvid             "    
         :put "     containerenvs          =   $containerenvs             "  
         :put "     containermounts        =   $containermounts           "    
         :put "     containerethname       =   $containerethname          "     
@@ -194,17 +195,17 @@
         }
 
         # add ip address to routeros
-        /ip/address {
-            :put "check hostip"
-            :if ([:typeof [:tonum $containerhostip]] = "num") do={
-                :local ipaddr [add interface="$containerethname" address="$(containergw)/$(containerprefix)" comment="#$containertag"]
-                :put "added IP address=$(containergw)/$(containerprefix) interface=$containerethname"
+        :if ([:tostr $containerbridge] = "") do={
+            /ip/address {
+                :put "check hostip"
+                :if ([:typeof [:tonum $containerhostip]] = "num") do={
+                    :local ipaddr [add interface="$containerethname" address="$(containergw)/$(containerprefix)" comment="#$containertag"]
+                    :put "added IP address=$(containergw)/$(containerprefix) interface=$containerethname"
+                }
             }
         }
 
-        # TODO handle bridge!=""
-
-   
+  
         /interface/list/member {
             :if ([:len $containeraddresslist] > 0) do={
                 :local iflistmem [add interface="$containerethname" list="$containeraddresslist" comment="#$containertag"]
@@ -256,7 +257,6 @@
         }
         :return ""
     }
-
 
     :if ($action = "start") do={
         /container {
@@ -345,7 +345,7 @@
             :put "$containertag removing mounts $rmounts"
         }
         /interface/bridge/port {
-            remove [find comment~"#$containertag"] ]
+            remove [find comment~"#$containertag"]
             :put "$containertag removing any bridge ports"
         }
         /interface/list/member {
@@ -430,6 +430,6 @@
 # $NETINSTALL registry
 # $NETINSTALL registry <github|docker> [url=<str>]
 
-$NETINSTALL dump=yes
+#$NETINSTALL dump=yes
 
 
