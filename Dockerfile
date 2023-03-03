@@ -19,6 +19,10 @@ RUN apt-get update -y && \
 
 # Combine everything
 FROM alpine:latest
+
+ARG NET_VERSION
+ENV NET_VERSION=7.8
+
 WORKDIR /app
 RUN apk add --clean-protected --no-cache \
             bash \
