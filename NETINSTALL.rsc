@@ -3,10 +3,6 @@
 ###
 :put "** Loading \$NETINSTALL"
 
-
-:global NETINSTALL
-:set NETINSTALL
-
 :global NETINSTALL do={
 	:global NETINSTALL
 	:local arg1 $1
@@ -162,20 +158,16 @@
 			:local veth [add name="$containerethname" address="$containerip/$containerprefix" gateway=$containergw comment="#$containertag"]
 			:put "added VETH - $containerethname address=$(containerip)/$(containerprefix) gateway=$containergw "
 			:if ($containerbridge != "") do={
-				/interface/bridge {
-					:local bridgeid [get [find name=$containerbridge]]
+					:local bridgeid [/interface/bridge/find name=$containerbridge]
 					:if ([:len $bridgeid] != 1) do={
 						:error "bridge named $containerbridge not found"
 					}
 					:if ([get $bridgeid vlan-filtering] = "yes") do={
-						port add interface=veth-netinstall bridge="$containerbridge" pvid="$containerpvid" frame-types=admit-only-untagged-and-priority-tagged comment="#$containertag"
+						/interface/bridge/port add interface=veth-netinstall bridge="$containerbridge" pvid="$containerpvid" frame-types=admit-only-untagged-and-priority-tagged comment="#$containertag"
 					} else={
-						port add interface="$containerethname" bridge="$containerbridge" comment="#$containertag"
+						/interface/bridge/port add interface="$containerethname" bridge="$containerbridge" comment="#$containertag"
 					}
-				} 
 			}
-		}
-
 		}
 
 		# envs= option
