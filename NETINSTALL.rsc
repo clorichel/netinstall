@@ -5,6 +5,7 @@
 
 
 :global NETINSTALL
+
 :set NETINSTALL do={
     :global NETINSTALL 
     :local arg1 $1
