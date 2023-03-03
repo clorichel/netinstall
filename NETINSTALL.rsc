@@ -7,7 +7,7 @@
 :global NETINSTALL
 :set NETINSTALL
 
-:set NETINSTALL do={
+:global NETINSTALL do={
 	:global NETINSTALL
 	:local arg1 $1
 	:local arg2 $2
