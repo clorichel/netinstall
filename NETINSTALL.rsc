@@ -162,10 +162,10 @@
 					:if ([:len $bridgeid] != 1) do={
 						:error "bridge named $containerbridge not found"
 					}
-					:if ([get $bridgeid vlan-filtering] = "yes") do={
-						/interface/bridge/port add interface="$containerethname" bridge="$containerbridge" pvid="$containerpvid" frame-types=admit-only-untagged-and-priority-tagged comment="#$containertag"
+					:if ([/interface/bridge/get $bridgeid vlan-filtering] = "yes") do={
+						/interface/bridge/port add interface="$containerethname" bridge=$bridgeid pvid="$containerpvid" frame-types=admit-only-untagged-and-priority-tagged comment="#$containertag"
 					} else={
-						/interface/bridge/port add interface="$containerethname" bridge="$containerbridge" comment="#$containertag"
+						/interface/bridge/port add interface="$containerethname" bridge=$bridgeid comment="#$containertag"
 					}
 			}
 		}
