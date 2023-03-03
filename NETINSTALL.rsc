@@ -32,7 +32,7 @@
 	:local containernum "6" 
 	:local containeripbase "192.168.88."
 	:local containerprefix "24"
-	:local containerver "main"
+	:local containerver "master"
 	:local containerbootatstart "yes"
 	:local containeraddresslist "LAN"
 	:local containerhostip "1"
@@ -156,20 +156,23 @@
 		/interface/veth {
 			:put "check veth"
 			:local veth [add name="$containerethname" address="$containerip/$containerprefix" gateway=$containergw comment="#$containertag"]
-			:put "added VETH - $containerethname address=$(containerip)/$(containerprefix) gateway=$containergw "
-			:if ($containerbridge != "") do={
-					:local bridgeid [/interface/bridge/find name=$containerbridge]
-					:if ([:len $bridgeid] != 1) do={
-						:error "bridge named $containerbridge not found"
-					}
-          :put "adding port to bridge"
-					:if ([/interface/bridge/get $bridgeid vlan-filtering]) do={
-						/interface/bridge/port add interface=$veth bridge=$bridgeid pvid="$containerpvid" frame-types=admit-only-untagged-and-priority-tagged comment="#$containertag"
-					} else={
-						/interface/bridge/port add interface=$veth bridge=$bridgeid comment="#$containertag"
-					}
-			}
-		}
+			:put "added veth - $containerethname address=$(containerip)/$(containerprefix) gateway=$containergw "
+    }
+
+    # add port as bridge
+    :if ($containerbridge != "") do={
+        :local bridgeid [/interface/bridge/find name=$containerbridge]
+        :if ([:len $bridgeid] != 1) do={
+          :error "bridge named $containerbridge not found"
+        }
+        :put "adding port to bridge"
+        :if ([/interface/bridge/get $bridgeid vlan-filtering]) do={
+          /interface/bridge/port add interface=$containerethname bridge=$containerbridge pvid=[:tonum $containerpvid] frame-types="admit-only-untagged-and-priority-tagged" comment="#$containertag"
+        } else={
+          /interface/bridge/port add interface=$containerethname bridge=$containerbridge comment="#$containertag"
+        }
+    }
+	
 
 		# envs= option
 		/container/envs {
