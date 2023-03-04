@@ -335,8 +335,10 @@
 			:put "$containertag removing ip address from router $ripaddr"
 		}
 		/container/envs {
-			:local renvs [remove [find comment~"#$containertag"]]
-			:put "$containertag removing envs $renvs"
+      # remove lasttag
+      remove [find name="_$containername" key="lasttag"]
+			remove [find comment~"#$containertag"]
+			:put "$containertag removing envs"
 		}
 		/container/mounts {
 			:local rmounts [remove [find comment~"#$containertag"]]
