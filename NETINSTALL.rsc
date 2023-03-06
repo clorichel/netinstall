@@ -36,8 +36,8 @@
 	:local containerbootatstart "yes"
 	:local containeraddresslist "LAN"
 	:local containerhostip "1"
-	:local containerbridge "bridge"
-	:local containerpvid "2210"
+	:local containerbridge "netinstall"
+	:local containerpvid ""
 	:local containerlogging "yes"
 	:local maxwaitforstart "3m"
 	:local containerenvs [:toarray ""]
@@ -163,7 +163,11 @@
     :if ($containerbridge != "") do={
         :local bridgeid [/interface/bridge/find name=$containerbridge]
         :if ([:len $bridgeid] != 1) do={
-          :error "bridge named $containerbridge not found"
+	  :if ([:tostr $containerpvid] = "") do={
+	  	/interface/bridge/add name=$containerbridge
+	  } else={
+          	:error "bridge named $containerbridge not found"
+	  }
         }
         :put "adding port to bridge"
         :if ([/interface/bridge/get $bridgeid vlan-filtering]) do={
@@ -418,17 +422,13 @@
 # Some examples:
 
 # To build:
-# $NETINSTALL clean
+# $NETINSTALL clean [hostid=<num=1>] [dump=yes]
 # $NETINSTALL make [path=<disk_prefix>] [branch=<tagver>] [hostid=<num=1>] [dump=yes]
 
 # To control/manage
-# $NETINSTALL stop
-# $NETINSTALL start
-# $NETINSTALL shell force=["no"|"yes"]
-
-# Helper to switch between DockerHub and GitHub Container Registry
-# $NETINSTALL registry
-# $NETINSTALL registry <github|docker> [url=<str>]
+# $NETINSTALL stop [hostid=<num=1>]
+# $NETINSTALL start [hostid=<num=1>] 
+# $NETINSTALL shell [force=<"no"|"yes">] [hostid=<num=1>] 
 
 #$NETINSTALL dump=yes
 
