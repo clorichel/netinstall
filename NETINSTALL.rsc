@@ -32,7 +32,7 @@
 	:local containernum "6" 
 	:local containeripbase "192.168.88."
 	:local containerprefix "24"
-	:local containerver "master"
+	:local containerver "7.8"
 	:local containerbootatstart "yes"
 	:local containeraddresslist "LAN"
 	:local containerhostip "1"
