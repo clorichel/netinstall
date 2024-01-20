@@ -1,5 +1,5 @@
 #Define our Netinstall Version
-ARG NET_VERSION=7.13.2
+ARG NET_VERSION=7.14beta7
 
 # Download the netinstall files
 FROM alpine:latest AS build
@@ -20,7 +20,7 @@ RUN apt-get update -y && \
 # Get and extract extra-packages
 FROM busybox AS unpack
 ARG NET_VERSION
-ENV NET_VERSION=7.13.2
+ENV NET_VERSION=7.14beta7
 WORKDIR /unpack
 ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-arm-$NET_VERSION.zip /
 RUN unzip /all_packages-arm-$NET_VERSION.zip
@@ -33,7 +33,7 @@ RUN unzip /all_packages-mipsbe-$NET_VERSION.zip
 FROM alpine:latest
 
 ARG NET_VERSION
-ENV NET_VERSION=7.13.2
+ENV NET_VERSION=7.14beta7
 
 WORKDIR /app
 RUN apk add --clean-protected --no-cache \
