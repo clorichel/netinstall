@@ -33,7 +33,7 @@
 	:local containeripbase "192.168.88."
 	:local containerprefix "24"
 	:local rosver "7.14beta7"
-	:local containerver "v7.14beta7"
+	:local containerver "v$rosver"
 	:local containerbootatstart "yes"
 	:local containeraddresslist "LAN"
 	:local containerhostip "1"
