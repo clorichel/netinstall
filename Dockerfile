@@ -17,6 +17,18 @@ RUN apt-get update -y && \
     ls -al /usr/bin && \
     cp $(which qemu-i386-static) .
 
+# Get and extract extra-packages
+FROM busybox AS unpack
+ARG NET_VERSION
+ENV NET_VERSION=7.13.2
+WORKDIR /unpack
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-arm-$NET_VERSION.zip /
+RUN unzip /all_packages-arm-$NET_VERSION.zip
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-arm64-$NET_VERSION.zip /
+RUN unzip /all_packages-arm64-$NET_VERSION.zip
+ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-mipsbe-$NET_VERSION.zip /
+RUN unzip /all_packages-mipsbe-$NET_VERSION.zip
+
 # Combine everything
 FROM alpine:latest
 
@@ -47,6 +59,9 @@ ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION.np
 
 ## Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
+
+## Copy downloaded extra-packages from "unpack" images
+COPY --from=unpack /unpack /app/images
 
 ## Use micro init program to launch script
 CMD ["dumb-init", "/entrypoint.sh"]
