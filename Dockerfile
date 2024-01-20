@@ -1,5 +1,5 @@
 #Define our Netinstall Version
-ARG NET_VERSION=7.8
+ARG NET_VERSION=7.13.2
 
 # Download the netinstall files
 FROM alpine:latest AS build
@@ -21,7 +21,7 @@ RUN apt-get update -y && \
 FROM alpine:latest
 
 ARG NET_VERSION
-ENV NET_VERSION=7.8
+ENV NET_VERSION=7.13.2
 
 WORKDIR /app
 RUN apk add --clean-protected --no-cache \
