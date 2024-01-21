@@ -32,7 +32,7 @@
 	:local containernum "6" 
 	:local containeripbase "192.168.88."
 	:local containerprefix "24"
-	:local rosver "7.14beta7"
+	:local rosver "7.12.1"
 	:local containerver "v$rosver"
 	:local containerbootatstart "yes"
 	:local containeraddresslist "LAN"
@@ -42,7 +42,8 @@
 	:local containerlogging "yes"
 	:local maxwaitforstart "3m"
 	:local containerenvs [:toarray ""]
-	:set ($containerenvs->"NETINSTALL_NPK") "routeros-$rosver-arm.npk"
+	:set ($containerenvs->"NETINSTALL_NPK") "routeros"
+	:set ($containerenvs->"NETINSTALL_ARCH") "arm"
 	
  
 	:local containermounts [:toarray ""]

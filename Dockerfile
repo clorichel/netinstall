@@ -1,5 +1,5 @@
 #Define our Netinstall Version
-ARG NET_VERSION=7.14beta7
+ARG NET_VERSION=7.12.1
 
 # Download the netinstall files
 FROM alpine:latest AS build
@@ -20,7 +20,7 @@ RUN apt-get update -y && \
 # Get and extract extra-packages
 FROM busybox AS unpack
 ARG NET_VERSION
-ENV NET_VERSION=7.14beta7
+ENV NET_VERSION=7.12.1
 WORKDIR /unpack
 ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-arm-$NET_VERSION.zip /
 RUN unzip /all_packages-arm-$NET_VERSION.zip
@@ -33,7 +33,7 @@ RUN unzip /all_packages-mipsbe-$NET_VERSION.zip
 FROM alpine:latest
 
 ARG NET_VERSION
-ENV NET_VERSION=7.14beta7
+ENV NET_VERSION=7.12.1
 
 WORKDIR /app
 RUN apk add --clean-protected --no-cache \
@@ -51,11 +51,11 @@ COPY --from=build /app .
 ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm.npk /app/images/routeros-$NET_VERSION-arm.npk
 ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm64.npk /app/images/routeros-$NET_VERSION-arm64.npk
 ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mipsbe.npk /app/images/routeros-$NET_VERSION-mipsbe.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mmips.npk /app/images/routeros-$NET_VERSION-mmips.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-smips.npk /app/images/routeros-$NET_VERSION-smips.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-tile.npk /app/images/routeros-$NET_VERSION-tile.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-ppc.npk /app/images/routeros-$NET_VERSION-ppc.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION.npk /app/images/routeros-$NET_VERSION.npk
+#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mmips.npk /app/images/routeros-$NET_VERSION-mmips.npk
+#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-smips.npk /app/images/routeros-$NET_VERSION-smips.npk
+#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-tile.npk /app/images/routeros-$NET_VERSION-tile.npk
+#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-ppc.npk /app/images/routeros-$NET_VERSION-ppc.npk
+#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION.npk /app/images/routeros-$NET_VERSION.npk
 
 ## Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
