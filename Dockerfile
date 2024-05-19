@@ -14,9 +14,9 @@ WORKDIR /app
 ## copy qemu x86 static binary from debian layer
 COPY --from=qemu /app/qemu-i386-static /app/i386
 
-# we just need make
+# we just need make...:
 RUN apk add --clean-protected --no-cache make && rm -rf /var/cache/apk/*
 COPY Makefile /app/Makefile
 
-## Use micro init program to launch script
-CMD ["make"]
+## so make is the init
+CMD ["make", "service"]
