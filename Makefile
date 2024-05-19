@@ -1,5 +1,5 @@
 ARCH ?= arm
-PKGS ?= zerotier wifi-qcom-ac wifi-qcom
+PKGS ?= zerotier wifi-qcom-ac
 CHANNEL ?= stable
 OPTS ?= -b -r
 IFACE ?= eth0

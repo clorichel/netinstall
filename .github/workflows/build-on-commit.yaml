@@ -53,9 +53,9 @@ jobs:
         sbom: false
         provenance: false
         platforms: ${{ env.PLATFORMS }}
-        tags: 
-          - ghcr.io/${{ github.repository }}:latest
-          - ammo74/netinstall:latest
+        tags: |
+          ghcr.io/${{ github.repository }}:latest
+          ammo74/netinstall:latest
         build-args: |
           GHCR_REPO=${{ github.repository }}
           GHCR_TAG=${{ steps.meta.outputs.tags }}
