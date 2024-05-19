@@ -1,15 +1,5 @@
-#Define our Netinstall Version
-ARG NET_VERSION=7.12.1
 
-# Download the netinstall files
-FROM alpine:latest AS build
-ARG NET_VERSION
-WORKDIR /app
-RUN wget -O /tmp/netinstall.tar.gz https://download.mikrotik.com/routeros/$NET_VERSION/netinstall-$NET_VERSION.tar.gz && \
-  tar -xvf /tmp/netinstall.tar.gz
-
-
-# Obtain qemu-user-static binaries
+# download qemu-user-static binaries from debian
 FROM debian:stable-slim AS qemu
 WORKDIR /app
 RUN apt-get update -y && \
@@ -17,51 +7,16 @@ RUN apt-get update -y && \
     ls -al /usr/bin && \
     cp $(which qemu-i386-static) .
 
-# Get and extract extra-packages
-FROM busybox AS unpack
-ARG NET_VERSION
-ENV NET_VERSION=7.12.1
-WORKDIR /unpack
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-arm-$NET_VERSION.zip /
-RUN unzip /all_packages-arm-$NET_VERSION.zip
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-arm64-$NET_VERSION.zip /
-RUN unzip /all_packages-arm64-$NET_VERSION.zip
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/all_packages-mipsbe-$NET_VERSION.zip /
-RUN unzip /all_packages-mipsbe-$NET_VERSION.zip
-
-# Combine everything
+# make real image using alpine
 FROM alpine:latest
-
-ARG NET_VERSION
-ENV NET_VERSION=7.12.1
-
 WORKDIR /app
-RUN apk add --clean-protected --no-cache \
-            bash \
-            dumb-init && \
-    rm -rf /var/cache/apk/*
 
-## Copy out the qemu x86 binary
-COPY --from=qemu /app/qemu-i386-static .
+## copy qemu x86 static binary from debian layer
+COPY --from=qemu /app/qemu-i386-static /app/i386
 
-## Copy out the netinstall binary
-COPY --from=build /app .
-
-# ADD matched versions of netinstall for RouterOS main packages
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm.npk /app/images/routeros-$NET_VERSION-arm.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-arm64.npk /app/images/routeros-$NET_VERSION-arm64.npk
-ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mipsbe.npk /app/images/routeros-$NET_VERSION-mipsbe.npk
-#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-mmips.npk /app/images/routeros-$NET_VERSION-mmips.npk
-#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-smips.npk /app/images/routeros-$NET_VERSION-smips.npk
-#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-tile.npk /app/images/routeros-$NET_VERSION-tile.npk
-#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION-ppc.npk /app/images/routeros-$NET_VERSION-ppc.npk
-#ADD https://download.mikrotik.com/routeros/$NET_VERSION/routeros-$NET_VERSION.npk /app/images/routeros-$NET_VERSION.npk
-
-## Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-
-## Copy downloaded extra-packages from "unpack" images
-COPY --from=unpack /unpack /app/images
+# we just need make
+RUN apk add --clean-protected --no-cache make && rm -rf /var/cache/apk/*
+COPY Makefile /app/Makefile
 
 ## Use micro init program to launch script
-CMD ["dumb-init", "/entrypoint.sh"]
+CMD ["make"]

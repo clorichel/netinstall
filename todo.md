@@ -1,4 +1,0 @@
-- Implement auto restart of netinstall with tini
-- Implement option to add additional npks (eg. branding packages)
-- Implement `-s` netinstall parameter via enviroment variable
-- Implement `-k` netinstall parameter via enviroment variable

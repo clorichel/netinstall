@@ -2,16 +2,13 @@ name: build-on-commit
 
 on:
   push:
-    branches:
-      - "**"
-    tags:
-      - "v*.*.*"
-  pull_request:
-    branches:
-      - "main"
+    paths:
+      - Dockerfile
+      - Makefile
+      - '.gihtub/workflows/*'
 
 env:
-  PLATFORMS: linux/arm/v7,linux/arm64
+  PLATFORMS: linux/arm/v7,linux/arm64,linux/amd64
 
 permissions:
   packages: write
@@ -20,7 +17,6 @@ permissions:
 jobs:
 
   build:
-
     runs-on: ubuntu-latest
     
     steps:
@@ -63,7 +59,7 @@ jobs:
         sbom: false
         provenance: false
         platforms: ${{ env.PLATFORMS }}
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: ${{ github.repository }}:latest
         build-args: |
           GHCR_REPO=${{ github.repository }}
           GHCR_TAG=${{ steps.meta.outputs.tags }}
