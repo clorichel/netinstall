@@ -28,7 +28,7 @@ There is an associated `Dockerfile` to enable containerization, including using 
 #### Prerequisites
 * Linux device (or virtual machine) with ethernet 
 * Some familiarity with the UNIX shell and commands
-* `make` is installed (by default, most distro include it)
+* `make`, `wget`, and `unzip` installed on your system.
 
 > **NOTE**
 >
@@ -39,7 +39,7 @@ There is an associated `Dockerfile` to enable containerization, including using 
 You can download the Makefile itself to a new directory, and then just run `make download` to see what, if any, options are needed.  But it may be easier to just use:
 
 ```
-cd ~    # or anywhere
+cd ~
 git clone https://github.com/tikoci/netinstall.git
 cd netinstall 
 make download
@@ -56,39 +56,48 @@ make dump # to test
 > **INFO**
 >
 > `sudo` must be used on most desktop Linux distros for any operation that starts running `netinstall`, since privileged ports are used.
+> But just downloading files, should not requrie `root` or `sudo` – just launching `netinstall` might on most Linux distros.
+>
 
 * The runs netinstall using "testing" (`CHANNEL`) build with "mipsbe" (`ARCH`):
-  ```
+  ```sh
   sudo make testing mipsbe 
   ```
-* Download files for "stable" on the "tile" CPU - but does NOT run netinstall -  removing any cached files to save space and force a refresh:
+* Download files for "stable" on the "tile" CPU - but NOT run netinstall:
+  ```sh
+  make stable tile download 
   ```
-  make clean stable tile download 
+* To remove all cached downloaded files:
+  ```sh
+  make clean
   ```
-* Conversely, without `clean` or `download`, a local copy of packages will be used so this should be quick — since files for "stable tile" were previously downloaded in the above example:
+* This command will continuously run the netinstall process in a loop.
+  ```sh
+  sudo make service
   ```
-  sudo make stable tile
+* All of `netinstall` options can be also provided can be using the `VAR=VAL` scheme after the `make`: 
+  ```sh
+  make run ARCH=mipsbe VER=7.14.3 VER_NETINSTALL=7.15rc3 PKGS="wifi-qcom container zerotier" CLIENTIP=192.168.88.7 OPTS="-e" 
   ```
-* Similarly, without `clean` or `download`, a local copy of packages will be used and since, by default, `netinstall` attempts to start:
-  ```
-  sudo make stable tile
-  ```
+  > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is only for extra-packages, it's assumed some routeros, based on `ARCH` and `VER` is needed.
+
 
 
 ## RouterOS `/container` Install
 
-To use a `/container` running `netinstall` to enable a full reset/recovery of a connected RouterOS device, some steps are needed.  The basic approach is the container's VETH is bridged to a physical ethernet port using a new `/interface/bridge`, and the container runs `netinstall` using emulation (on arm/arm64) using options provided via `/container/env` entries and the remote.
+`/container` running `netinstall` is handy to enable reset/recovery of a connected RouterOS device, some steps are needed.  The basic approach is the container's VETH is bridged to a physical ethernet port using a new `/interface/bridge`, and the container runs `netinstall` using emulation (on arm/arm64).  Control over stuff like version and architecture are provided via `/container/env` entries and the remote.  No `/container/mounts` are needed, packages are downloaded automatically based on the environment variables.
 
 > Theoretically a single VLAN-enabled bridge should work if VETH and target physical port have some vlan-id=.  But for `netinstall` likely best if just separate, since VLANs add another level of complexity here.  Likely possible, just untested.
-
-See Mikrotik's docs on `/container` for more details and background, including how to install the prerequisites:
-https://help.mikrotik.com/docs/display/ROS/Container
 
 #### Prerequisites
 
 * RouterOS device that supports containers, generally ARM, ARM64, or X86 devices
 * Some non-flash storage (internal drives, ramdisk, NFS/SMB client via ROS, USB, etc.)
 * `container.npk` extra-package has been installed and other RouterOS specifics, and `/system/device-mode` has been used to enable container support as well.
+
+See Mikrotik's docs on `/container` for more details and background, including how to install the prerequisites:
+https://help.mikrotik.com/docs/display/ROS/Container
+
 
 #### Steps
 
@@ -203,6 +212,7 @@ Let's start with some commons ones, directly from the `Makefile` script:
 ARCH ?= arm
 PKGS ?= wifi-qcom-ac zerotier
 CHANNEL ?= stable
+# ...
 ```
 
 These can used in three ways:
@@ -223,7 +233,7 @@ These can used in three ways:
     ./netinstall-cli-7.15rc3 -b -r -a 192.168.88.7 routeros-7.14.3-mipsbe.npk iot-7.14.3-mipsbe.npk gps-7.14.3-mipsbe.npk ups-7.14.3-mipsbe.npk
     ```
 3. **Using environment variables**
-   This is generally most useful with containers, since environment variables are the typical configuration method (other than rebuilding and redeploying).  For a Mikrotik, these are stored in `/container/env`.  On Linux you can use `export` and store then in `.profile`.
+   This is generally most useful with containers, since environment variables are the typical configuration method (other than rebuilding and redeploying).  For a Mikrotik, these are stored in `/container/env` and documented elsewhere here.  On Linux, you can use `export VER_NETINSTALL=7.14.2` in a `.profile`, if you wanted some options to persist at a Linux shell, i.e. to avoid always having to provide them everytime like `make VER_NETINSTALL=7.14.2`.  Additionally, you can just edit the variable directly in the Makefile too – but Makefile get updated, changes would have be merged.  
     
 
 ### Basic Settings
