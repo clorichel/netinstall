@@ -95,6 +95,7 @@ https://help.mikrotik.com/docs/display/ROS/Container
 1. Create `/interface/veth` interface:
     ```
     /interface veth add address=172.17.9.200/24 gateway=172.17.9.1 name=veth-netinstall
+    /ip address add address=172.17.9.1/24 interface=veth-netinstall
     ```
 2. Create a separate bridge for `netinstall` use and add VETH to it:
     ```
@@ -123,14 +124,23 @@ https://help.mikrotik.com/docs/display/ROS/Container
     /container envs add key=ARCH name=NETINSTALL value=arm64
     /container envs add key=CHANNEL name=NETINSTALL value="testing"
     /container envs add key=PKGS name=NETINSTALL value="container zerotier wifi-qcom iot gps"
-    /container envs add key=OPTS name=NETINSTALL value="-b -r"
-
+    /container envs add key=OPTS name=NETINSTALL value="-b -r" comment=" use EITHER -r to reset to defaults or -e for an empty config; use -b to remove any branding"
     ```
+    > **NOTE** 
+    >
     > The following are used to set a specific version, instead of using `CHANNEL` to select the version, or to mix-and-match `netinstall` versions as needed:
     > ```
     >     /container envs add key=VER name=NETINSTALL value=7.12.1
     >     /container envs add key=VER_NETINSTALL name=NETINSTALL value=7.15rc3
     > ```
+    >
+    > Also there are variables to control networking.  The container's defaults and these should NOT be needed.  
+    > ```
+    >         /container envs add key=IFACE name=NETINSTALL value="eth0"
+    >         /container envs add key=CLIENTIP name=NETINSTALL value="172.17.9.101"
+    > ```
+    > The underlying `netinstall`'s `-a <clientip>` and `-i <iface>` options are **mutually exclusive**. So if **both** `CLIENTIP` and `IFACE` are set, then `IFACE` is ignored and "-i" with the `CLIENTIP` will be used in `make`.
+
 ---
 ---
 >
@@ -159,6 +169,7 @@ https://help.mikrotik.com/docs/display/ROS/Container
     > Or, if using ghcr.io, instead of DockerHub, use `remote-image=ghcr.io/tikoci/netinstall` instead.
 
     > **NOTE**
+    >
     > If you built your own `.tar` file using `docker buildx`, do not use `remote-image=` at all.  Instead, use `file=` that contains the path of the `.tar` image uploaded to the router.  The rest of the attributes to `/container add` are the same. 
 
     It will take about a minute to download and process the image file. 
@@ -172,10 +183,12 @@ https://help.mikrotik.com/docs/display/ROS/Container
     ```
 
     > **TIP**
+    >
     > Configuration and options are described elsewhere, but using `/container/env` is likely the easiest.
 
 9. Using variables used to control the container are described elsewhere.  In general, using the /container/env methods is simplest.
     > **NOTE**
+    >
     > A restart of the netinstall container (e.g. hitting stop, waiting 30s, then hitting start ) is required to pick up any changed settings.
     > This can be done using a rather complex one-line that re-tries:
     > ```
