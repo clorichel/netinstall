@@ -4,15 +4,16 @@ CHANNEL ?= stable
 OPTS ?= -b -r
 IFACE ?= eth0
 #CLIENTIP ?= 172.17.9.202
-NET_OPTS ?= $(if $(CLIENTIP), "-a $(CLIENTIP)", "-i $(IFACE)")
+NET_OPTS ?= $(if $(CLIENTIP),-a $(CLIENTIP),-i $(IFACE))
 URLVER ?= https://upgrade.mikrotik.com/routeros/NEWESTa7
-VER_CHANNEL := $(firstword $(shell wget -q -O - $(URLVER).$(CHANNEL)))
-VER ?= $(VER_CHANNEL)
-VER_NETINSTALL ?= $(VER_CHANNEL)
+channel_ver = $(firstword $(shell wget -q -O - $(URLVER).$(1)))
+VER ?= $(call channel_ver,$(CHANNEL))
+VER_NETINSTALL ?= $(call channel_ver,testing)
 PKGS_FILES := $(foreach pkg, $(PKGS), $(pkg)-$(VER)-$(ARCH).npk)
 QEMU ?= ./i386
 PLATFORM ?= $(shell uname -m)
-.PHONY: run all service clean nothing dump extra-packages stable long-term testing arm arm64 mipsbe mmips smips ppc tile x86
+
+.PHONY: run all service download clean nothing dump extra-packages stable long-term testing arm arm64 mipsbe mmips smips ppc tile x86
 .SUFFIXES:
 
 run: all
@@ -23,6 +24,9 @@ run: all
 
 service: all
 	while :; do $(MAKE) run ARCH=$(ARCH) VER=$(VER); done
+
+download: all
+	@echo use 'make' to run netinstall after connecting $(IFACE) or $(CLIENTIP) to router
 
 all: routeros-$(VER)-$(ARCH).npk netinstall-cli-$(VER_NETINSTALL) all_packages-$(ARCH)-$(VER).zip
 	@echo finished download ARCH=$(ARCH) VER=$(VER) PKGS=$(PKGS) PLATFORM=$(PLATFORM)
