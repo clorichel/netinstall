@@ -1,4 +1,4 @@
-# `Makefile` for Mikrotik Netinstall 
+# Automation for running `netinstall`, using `make`
 
 `netinstall` allows the "flashing" of Mikrotik devices, using a list of packages and various options.  While Mikrotik provides a Linux version of `netinstall`, running it involves many steps.  One of which is the downloading packages, for the right CPU, and the possibility some "extra-packages" are needed too.
 
