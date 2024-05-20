@@ -51,7 +51,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         repository: ammo74/netinstall
-        short-description: "Mikrotik /container for running netinstall to flash RouterOS devices on ARM/ARM64/X86"
+        short-description: "RouterOS /container for running netinstall to flash Mikrotik devices on ARM/ARM64/X86"
     - 
       name: Build image and push image to ghcr.io
       uses: docker/build-push-action@v5
