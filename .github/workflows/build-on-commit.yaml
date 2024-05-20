@@ -1,12 +1,12 @@
 name: build-on-commit
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - Dockerfile
       - Makefile
       - '.github/workflows/**'
-
 env:
   PLATFORMS: linux/arm/v7,linux/arm64,linux/amd64
 
