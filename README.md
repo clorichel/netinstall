@@ -16,8 +16,7 @@ The "script" is invoked by just calling `make` from the same directory, and by d
 
 #### _or..._ Running as a Mikrotik `/container` 
 
-There is an associated `Dockerfile` to enable containerization, including using QEMU to run Mikrotik's X86 `netinstall` binary on other platforms, specifically ARM and ARM64/aarch.  By default, the container version runs as a "service", so after one netinstall completes, it goes on to waiting for the next. The OCI container image for a `/container/add tag= ...` is available on DockerHub and GitHub's ghcr.io repo (for arm, arm64/aarch, and x86_64/amd64) using tag=
-`ammo74/netinstall` for [DockerHub](https://hub.docker.com/r/ammo74/netinstall) or [GitHub Container Registry (ghcr.io)](https://github.com/tikoci/netinstall/pkgs/container/netinstall) for `ghcr.io/tikoci/netinstall:latest` as remote-image=/tag= in `/container`
+There is an associated `Dockerfile` to enable containerization, including using QEMU to run Mikrotik's X86 `netinstall` binary on other platforms, specifically ARM and ARM64/aarch.  By default, the container version runs as a "service", so after one netinstall completes, it goes on to waiting for the next.
 
 
 
