@@ -19,15 +19,14 @@ The "script" is invoked by just calling `make` from the same directory, and by d
 There is an associated `Dockerfile` to enable containerization, including using QEMU to run Mikrotik's X86 `netinstall` binary on other platforms, specifically ARM and ARM64/aarch.  By default, the container version runs as a "service", so after one netinstall completes, it goes on to waiting for the next. The OCI container image for a `/container/add tag= ...` is available on DockerHub and GitHub's ghcr.io repo (for arm, arm64/aarch, and x86_64/amd64) using tag=
 `ammo74/netinstall` for [DockerHub](https://hub.docker.com/r/ammo74/netinstall) or [GitHub Container Registry (ghcr.io)](https://github.com/tikoci/netinstall/pkgs/container/netinstall) for `ghcr.io/tikoci/netinstall:latest` as remote-image=/tag= in `/container`
 
-> On RouterOS, the container registry must be set to either one of those in 
-> `/container/config`
+
 
 
 
 
 ## RouterOS `/container` Install
 
-`/container` running `netinstall` is handy to enable reset/recovery of a connected RouterOS device, some steps are needed.  The basic approach is the container's VETH is bridged to a physical ethernet port using a new `/interface/bridge`, and the container runs `netinstall` using emulation (on arm/arm64).  Control over stuff like version and architecture are provided via `/container/env` entries and the remote.  No `/container/mounts` are needed, packages are downloaded automatically based on the environment variables.
+`/container` running `netinstall` is handy to enable reset/recovery of a connected RouterOS device, some steps are needed.  The basic approach is the container's VETH is bridged to a physical ethernet port using a new `/interface/bridge`.  Then the container runs `netinstall` using emulation (on arm/arm64).   No `/container/mounts` are needed – packages are downloaded automatically based on the environment variables provided to the image.
 
 > Theoretically a single VLAN-enabled bridge should work if VETH and target physical port have some vlan-id=.  But for `netinstall` likely best if just separate, since VLANs add another level of complexity here.  Likely possible, just untested.
 
@@ -44,94 +43,88 @@ https://help.mikrotik.com/docs/display/ROS/Container
 #### Steps
 
 1. Create `/interface/veth` interface:
-    ```
-    /interface veth add address=172.17.9.200/24 gateway=172.17.9.1 name=veth-netinstall
-    /ip address add address=172.17.9.1/24 interface=veth-netinstall
-    ```
+ ```
+ /interface veth add address=172.17.9.200/24 gateway=172.17.9.1 name=veth-netinstall
+ /ip address add address=172.17.9.1/24 interface=veth-netinstall
+ ```
 2. Create a separate bridge for `netinstall` use and add VETH to it:
-    ```
-    /interface bridge add name=bridge-netinstall
-    /interface bridge port add bridge=bridge-netinstall interface=veth-netinstall
-    ```
-3. Add veth and physical port to bridge: 
-    ```
-    /interface bridge port add bridge=bridge-netinstall interface=ether5
-    ```
-    **or** reassign a _existing_ bridge port to the new `bridge-netinstall`:
-    ```
-    /interface bridge port set [find interface=ether5 bridge=bridge-netinstall 
-    ````
-    > **NOTE** _Replace `ether5` with the physical ethernet port where the device needing `netinstall` is going to connect._    
+ ```
+ /interface bridge add name=bridge-netinstall
+ /interface bridge port add bridge=bridge-netinstall interface=veth-netinstall
+ ```
+3. Add veth and physical port, _e.g._ "ether5", to the newly created bridge: 
+ ```
+ /interface bridge port add bridge=bridge-netinstall interface=ether5
+ ```
+ or, if the physical port is already in a bridge port, reassign it instead: `/interface bridge port [find interface=ether5] bridge=bridge-netinstall`
+ > **NOTE** _Replace `ether5` with the physical ethernet port where the device needing `netinstall` is going to connect._    
 
 4. Adjust the firewall so the container can download packages/netinstall binary from Mikrotik.  The exact changes needed can be specific.  But if using the default firewall, the easiest may be:
-    ```
-    /interface/list/member add list=LAN interface=bridge-netinstall 
-    ```
+ ```
+ /interface/list/member add list=LAN interface=bridge-netinstall 
+ ```
     > **TIP**
     > Alternatively, you can /ip/firewall/filter or NAT rules on the containers subnet, to specifically allow VETH access to the internet.  Traffic between `netinstall` is forwarded, not routed, so only needed for outbound access from the container's IP.  **How?** - depends...   
 
 5. Create environment variables to control what `netinstall` behaviors:
-    ```
-    /container envs add key=ARCH name=NETINSTALL value=arm64
-    /container envs add key=CHANNEL name=NETINSTALL value="testing"
-    /container envs add key=PKGS name=NETINSTALL value="container zerotier wifi-qcom iot gps"
-    /container envs add key=OPTS name=NETINSTALL value="-b -r" comment=" use EITHER -r to reset to defaults or -e for an empty config; use -b to remove any branding"
-    ```
+ ```
+ /container envs add key=ARCH name=NETINSTALL value=arm64
+ /container envs add key=CHANNEL name=NETINSTALL value="testing"
+ /container envs add key=PKGS name=NETINSTALL value="container zerotier wifi-qcom iot gps"
+ /container envs add key=OPTS name=NETINSTALL value="-b -r" comment=" use EITHER -r to reset to defaults or -e for an empty config; use -b to remove any branding"
+ ```
     > **NOTE** 
     >
     > The following are used to set a specific version, instead of using `CHANNEL` to select the version, or to mix-and-match `netinstall` versions as needed:
     > ```
-    >     /container envs add key=VER name=NETINSTALL value=7.12.1
-    >     /container envs add key=VER_NETINSTALL name=NETINSTALL value=7.15rc3
+    > /container envs add key=VER name=NETINSTALL value=7.12.1
+    > /container envs add key=VER_NETINSTALL name=NETINSTALL value=7.15rc3
     > ```
     >
     > Also there are variables to control networking.  The container's defaults and these should NOT be needed.  
     > ```
-    >         /container envs add key=IFACE name=NETINSTALL value="eth0"
-    >         /container envs add key=CLIENTIP name=NETINSTALL value="172.17.9.101"
+    > /container envs add key=IFACE name=NETINSTALL value="eth0"
+    > /container envs add key=CLIENTIP name=NETINSTALL value="172.17.9.101"
     > ```
-    > The underlying `netinstall`'s `-a <clientip>` and `-i <iface>` options are **mutually exclusive**. So if **both** `CLIENTIP` and `IFACE` are set, then `IFACE` is ignored and "-i" with the `CLIENTIP` will be used in `make`.
+    > The underlying `netinstall`'s `-a <clientip>` and `-i <iface>` options are **mutually exclusive**. So if **both** `CLIENTIP` and `IFACE` are set, then `IFACE` is ignored, and "-i" with the `CLIENTIP` will be used in `make`.
 
----
 ---
 >
 > **TIP**
 >
-> It's possible to build the container image yourself into a `.tar`, instead of some of the steps below. See Mikrotik docs for [example Docker build steps](https://help.mikrotik.com/docs/display/ROS/Container#Container-c\)buildanimageonPC) for Pi-Hole.  To start, use `git clone https://github.com/tikoci/netinstall.git`, to get the needed `Dockerfile` (and `Makefile` that contains the `netinstall` logic) to start `docker buildx` that well in a few steps get a `.tar` file locally to use on RouterOS – without using DockerHub, etc.
+> To build the container image into a `.tar` instead... Generally, adapt the steps here with Mikrotik docs for [example Docker build steps](https://help.mikrotik.com/docs/display/ROS/Container#Container-c\)buildanimageonPC) for Pi-Hole.  To begin, use `git clone https://github.com/tikoci/netinstall.git` to download needed `Dockerfile` and `Makefile` (that contains the `netinstall` logic) to your PC & use these with  `docker buildx` as described in Mikrotik's doc, with a few more steps you get a `.tar` for use on RouterOS – without using DockerHub or GHCR.
 >
----
-6. The `registry-url` is used to fetch "pull" images. Either DockerHub or GitHub Container Registry are supported.
-    To see what's set, use `/container/config/print` to view the `registry-url` and `tmpdir` in use. 
 
-    So for DockerHub, the setting should look like this:
-    ```
-    /container config set registry-url=https://registry-1.docker.io tmpdir=disk1/pulls-docker
-    ```
+6. The `registry-url` is used to fetch "pull" images. Either DockerHub or GitHub Container Registry are supported.
+ To see what's set, use `/container/config/print` to view the `registry-url` and `tmpdir` in use. 
+
+ For DockerHub, the setting should look like this:
+ ```
+ /container config set registry-url=https://registry-1.docker.io tmpdir=disk1/pulls-docker
+ ```
     > **NOTE** 
     > _Adjust the `disk1/` path as needed to use a non-flash disk_
 
-    > Or for GitHub's Container Registry (ghcr.io), `/container config set registry-url=https://ghcr.io tmpdir=disk1/pulls-ghcr` - the `remote-image=` depends on the repo set, but either will work but tag= must align with the repo being used.
-
 7. Create the container and start the container.  This assumes DockerHub is being used:
     
-    ```
-    /container add remote-image=ammo74/netinstall:latest envlist=NETINSTALL interface=veth-netinstall logging=yes workdir=/app root-dir=disk1/root-netinstall
-    ```
+ ```
+ /container add remote-image=ammo74/netinstall:latest envlist=NETINSTALL interface=veth-netinstall logging=yes workdir=/app root-dir=disk1/root-netinstall
+ ```
     > Or, if using ghcr.io, instead of DockerHub, use `remote-image=ghcr.io/tikoci/netinstall` instead.
 
     > **NOTE**
     >
     > If you built your own `.tar` file using `docker buildx`, do not use `remote-image=` at all.  Instead, use `file=` that contains the path of the `.tar` image uploaded to the router.  The rest of the attributes to `/container add` are the same. 
 
-    It will take about a minute to download and process the image file. 
-    After the new container is expanded, it is indicated as a "stopped" status (instead of "expanding" or "error").  Status can be shown by using `/container/print`.  
+ It will take about a minute to download and process the image file. 
+ After the new container is expanded, it is indicated as a "stopped" status (instead of "expanding" or "error").  Status can be shown by using `/container/print`.  
     
-    If you see "error" status means something failed, likely disk or firewall issues. Worth it to check the `/logs/print` to where the process has failed. 
+ If you see "error" status means something failed, likely disk or firewall issues. Worth it to check the `/logs/print` to where the process has failed. 
 
 8. Now Start Container!To try to start it, use:  
-    ```
-     /container/start [find tag~"netinstall" status="stopped"]   
-    ```
+ ```
+ /container/start [find tag~"netinstall" status="stopped"]   
+ ```
 
     > **TIP**
     >
@@ -160,32 +153,35 @@ CHANNEL ?= stable
 These can used in three ways:
 
 1. **Editing the Makefile**
-   All of the variables are at the top of the file.  The ones with `?=` are only used IF the same variable was NOT already provided via CLI or env.  In general, the only benefit of this method is persistence.
+ All of the variables are at the top of the file.  The ones with `?=` are only used IF the same variable was NOT already provided via CLI or env.  In general, the only benefit of this method is proximity.  The method is not recommended - it makes using some future updated `Makefile` harder.
    > **CAUTION** 
    >
-   > Be careful to not change computed/complex variables & avoid trailing spaces etc.  Also note that `Makefiles` use ONLY tab indentations, and Makefile will not run if wrong.
+   > Be careful to not change computed/complex variables & avoid trailing spaces etc.  And note `Makefiles` use tab indentations – Makefile will fail spaces are used if wrong.
+>
 2. **Provided via `make` at CLI**, in same directory as Makefile.  For example, to start netinstall for mipsbe using the `VER` number directly, with some extra packages and `-a 192.168.88.7` option, and specific version `netinstall` to be used of 7.15rc3: 
-    ```
-    cd ~/netinstall
-    sudo make -d ARCH=mipsbe VER=7.14.3 PKGS="iot gps ups" CLIENTIP=192.168.88.7 VER_NETINSTALL=7.15rc3
-    ```
-    which results in the following `netinstall` command line being used:
+ ```
+ cd ~/netinstall
+ sudo make -d ARCH=mipsbe VER=7.14.3 PKGS="iot gps ups" CLIENTIP=192.168.88.7 VER_NETINSTALL=7.15rc3
+ ```
+ which results in the following `netinstall` command line being used:
 
-    ```
-    ./netinstall-cli-7.15rc3 -b -r -a 192.168.88.7 routeros-7.14.3-mipsbe.npk iot-7.14.3-mipsbe.npk gps-7.14.3-mipsbe.npk ups-7.14.3-mipsbe.npk
-    ```
+ ```
+ ./netinstall-cli-7.15rc3 -b -r -a 192.168.88.7 routeros-7.14.3-mipsbe.npk iot-7.14.3-mipsbe.npk gps-7.14.3-mipsbe.npk ups-7.14.3-mipsbe.npk
+ ```
 3. **Using environment variables**
-   This is generally most useful with containers, since environment variables are the typical configuration method (other than rebuilding and redeploying).  For a Mikrotik, these are stored in `/container/env` and documented elsewhere here.  On Linux, you can use `export VER_NETINSTALL=7.14.2` in a `.profile`, if you wanted some options to persist at a Linux shell, i.e. to avoid always having to provide them everytime like `make VER_NETINSTALL=7.14.2`.  Additionally, you can just edit the variable directly in the Makefile too – but Makefile get updated, changes would have be merged.  
+ This is generally most useful with containers since environment variables are the typical configuration method.  
+**For Mikrotik RouterOS,** these are stored in `/container/env` and documented below.  
+**On Linux,** use `export VER_NETINSTALL=7.14.2` in a `.profile` or similar. This allows environment variables to persist on a Linux shell, similar to a container.  _i.e._ to avoid always having to provide them every time like `make VER_NETINSTALL=7.14.2`. 
 
 
 ### Basic Settings
 
 The specific file names needed for `netinstall` are generated automatically based on the `ARCH`, `CHANNEL`, and `PKGS` variables to make things easier to configure.   The routeros*.npk does NOT need to be included in `PKGS` - it is always added based on `ARCH`.  Only items "extra-packages" that needed to be installed are added to `PKGS`. 
 
-| _option_   | _default_       |           |
+| _option_ | _default_ |           |
 | -     | -             | -             |
 | ARCH | `arm` | **architecture name** must match `/system/resource`| 
-| PKGS | `wifi-qcom-ac zerotier`          | **additional package name(s)**, without version/CPU, separated by spaces, invalid/missing packages are skipped
+| PKGS | `wifi-qcom-ac zerotier` | **additional package name(s)**, without version/CPU, separated by spaces, invalid/missing packages are skipped
 | CHANNEL | `stable` | same choices as `/system/package/update` i.e. **testing**, **long-term**|
 
  Each time `make` is run, the `CHANNEL`'s current version is checked via the web and sets `VER` automatically.
@@ -196,12 +192,12 @@ The specific file names needed for `netinstall` are generated automatically base
 
 If `VER` or `VER_NETINSTALL` are provided, the string must be in the same form as published, like `7.15rc2` or `7.12.1`.  It **cannot** be a channel name like "stable".  But these variables can be any valid version, including older ones no longer on a channel.
 
-`VER_NETINSTALL` is useful since sometimes `netinstall` has bugs or gains new features.  Generally, a newer netinstall can, and often should, be used to install older versions _i.e. some potential `OPTS` has changed over time..._  By default, only `CHANNEL` controls what version of `netinstall` will be used.  Meaning, even if `VER` is lower/older than `VER_NETINSTALL`, the latest "stable" `netinstall` for Linux will be used by default.  That is unless `VER_NETINSTALL` is specified explicitly
+`VER_NETINSTALL` is useful since sometimes `netinstall` has bugs or gains new features.  Generally, a newer netinstall can, and often should, be used to install older versions _i.e. some potential `OPTS` has changed over time..._ By default, only `CHANNEL` controls what version of `netinstall` will be used.  Meaning, even if `VER` is lower/older than `VER_NETINSTALL`, the latest "stable" `netinstall` for Linux will be used by default.  That is unless `VER_NETINSTALL` is specified explicitly
 
-| _option_   | _default_       |           |
+| _option_ | _default_ |           |
 | -     | -             | -             |
 | VER | _calculated from `CHANNEL`_ | specific version to install on a device, in `x.y.z` form |
-| VER_NETINSTALL | _calculated from `CHANNEL`_ | version of `netinstall` to use, can be different than `VER`  |
+| VER_NETINSTALL | _calculated from `CHANNEL`_ | version of `netinstall` to use, can be different than `VER` |
 
 
 ### `OPTS` - Device Configuration
@@ -209,7 +205,7 @@ If `VER` or `VER_NETINSTALL` are provided, the string must be in the same form a
  
 To get an **empty config**, change `-r` in the `OPTS` variable to a **`-e`** (both `-r` and `-e` are NOT allowed at some time).  `netinstall` also supports additional options, like replacing the default configuration via an option `-s <defconf_file>` and `-k <keyfile>`.  These too can be provided in `OPTS` – as long as any file references are present
  
-| _option_   | _default_       |           |
+| _option_ | _default_ |           |
 | -     | -             | -             |
 | OPTS | `-b -r` | default is to "remove any branding" `-b` and "reset to default" `-r`, see [`netinstall` docs](https://help.mikrotik.com/docs/display/ROS/Netinstall#Netinstall-InstructionsforLinux)  |
 
@@ -223,7 +219,7 @@ In either case, the router and machine (or container's VETH) should be directly 
 
 If used within a Mikrotik `/container` via the Dockerfile/registry, the defaults should work: `-i eth0 ...` since the container only has one VETH _and the IP config has to work to get to this point._
 
-| _option_   | _default_       |           |
+| _option_ | _default_ |           |
 | -     | -             | -             |
 | IFACE | `eth0` | physical interface name connected to the device to `netinstall`, i.e. the link name in `ip addr` |
 | CLIENTIP | _not set_ | by default `-i <iface>` is used, if `CLIENTIP` then `-a <clientip>` is used |
@@ -234,7 +230,7 @@ If used within a Mikrotik `/container` via the Dockerfile/registry, the defaults
 ### Uncommon Options
 This should not be changed, documented here for consistency.
 
-| _option_   | _default_       |           |
+| _option_ | _default_ |           |
 | -     | -             | -             |
 | QEMU | `./i386` | `qemu-user-static` is needed to run `netinstall` on non-Intel platforms (`QEMU` is NOT used if X86).  See Dockerfile, but Alpine Linux does not have a pre-built package, so it's borrowed from a Debian build for use on Alpine.    |
 | URLVER | https://upgrade.mikrotik.com/routeros/NEWESTa7 | URL used to determine what version is "stable"/etc |
@@ -276,30 +272,30 @@ make dump # to test
 > **INFO**
 >
 > `sudo` must be used on most desktop Linux distros for any operation that starts running `netinstall`, since privileged ports are used.
-> But just downloading files, should not requrie `root` or `sudo` – just launching `netinstall` might on most Linux distros.
+> But just downloading files, should not require `root` or `sudo` – just launching `netinstall` might on most Linux distros.
 >
 
 * The runs netinstall using "testing" (`CHANNEL`) build with "mipsbe" (`ARCH`):
-  ```sh
+ ```sh
   sudo make testing mipsbe 
-  ```
+ ```
 * Download files for "stable" on the "tile" CPU - but NOT run netinstall:
-  ```sh
+ ```sh
   make stable tile download 
-  ```
+ ```
 * To remove all cached downloaded files:
-  ```sh
+ ```sh
   make clean
-  ```
+ ```
 * This command will continuously run the netinstall process in a loop.
-  ```sh
+ ```sh
   sudo make service
-  ```
-* All of `netinstall` options can be also provided can be using the `VAR=VAL` scheme after the `make`: 
-  ```sh
+ ```
+* All of `netinstall` options can be also provided using the `VAR=VAL` scheme after the `make`: 
+ ```sh
   make run ARCH=mipsbe VER=7.14.3 VER_NETINSTALL=7.15rc3 PKGS="wifi-qcom container zerotier" CLIENTIP=192.168.88.7 OPTS="-e" 
-  ```
-  > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is only for extra-packages, it's assumed some routeros, based on `ARCH` and `VER` is needed.
+ ```
+  > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is **only** for extra-packages – the base `routeros*.npk` is always included (based on `ARCH` and `VER`).
 
 
 
@@ -325,7 +321,7 @@ For example `make testing tile` which will start `netinstall` using the current 
 
 ### Combine `make` "shortcuts"
 
-For offline use, while only one channel and one architecture can be used at a time...Downloaded files are cached until deleted manually or `make clean`. So to download without running, add a `download` to the end of `make stable mipsbe download`, and repeated for any versions you want to "cache".
+For offline use, while only one channel and one architecture can be used at a time...Downloaded files are cached until deleted manually or `make clean`. So to download without running, add a `download` to the end of `make stable mipsbe download`, and repeat for any versions you want to "cache".
 
 > **TIP**
 >
@@ -347,7 +343,7 @@ For offline use, while only one channel and one architecture can be used at a ti
 > * As a "script interpreter", `make` (plus busybox tools) is significantly smaller "runtime" than Python/Node/etc.  Before loading the packages, the container image is 6MB.  
 >
 >The disadvantage is that is complex to understand unless one is already familiar with `Makefile`. It's a dense ~200-page manual (see "GNU make manual" in [HTML](https://www.gnu.org/software/make/manual/make.html) or [PDF](https://www.gnu.org/software/make/manual/make.pdf)).
-  But since `make` deals well with state and files, it saves a lot of `if [ -f routeros* ] ... fi` stuff it takes to do the same as here in `bash`... 
+ But since `make` deals well with state and files, it saves a lot of `if [ -f routeros* ] ... fi` stuff it takes to do the same as here in `bash`... 
 >
 >
 >After trying this, it does seem like a nifty trick in the bag to get a little more organization out of what is mainly some busybox and `/bin/sh` commands.  In particular, how it deals with variables from EITHER env or program args.  Anyway, worked well enough for me to write it up and share – both the tool and approach.
@@ -359,3 +355,5 @@ For offline use, while only one channel and one architecture can be used at a ti
 ## Unlicensing
 
 This work is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
+
+
