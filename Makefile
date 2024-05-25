@@ -1,15 +1,17 @@
 ARCH ?= arm
-PKGS ?= zerotier wifi-qcom-ac
+PKGS ?= wifi-qcom-ac
 CHANNEL ?= stable
 OPTS ?= -b -r
 IFACE ?= eth0
-#CLIENTIP ?= 172.17.9.101
+# PKGS_CUSTOM ?= ""
+# example: CLIENTIP ?= 172.17.9.101
 NET_OPTS ?= $(if $(CLIENTIP),-a $(CLIENTIP),-i $(IFACE))
 URLVER ?= https://upgrade.mikrotik.com/routeros/NEWESTa7
 channel_ver = $(firstword $(shell wget -q -O - $(URLVER).$(1)))
 VER ?= $(call channel_ver,$(CHANNEL))
-VER_NETINSTALL ?= $(call channel_ver,testing)
+VER_NETINSTALL ?= $(call channel_ver,$(CHANNEL))
 PKGS_FILES := $(foreach pkg, $(PKGS), $(pkg)-$(VER)-$(ARCH).npk)
+
 QEMU ?= ./i386
 PLATFORM ?= $(shell uname -m)
 
@@ -20,7 +22,7 @@ run: all
 	$(eval PKGS_FILES := $(shell for file in $(PKGS_FILES); do if [ -e "./$$file" ]; then echo "$$file"; fi; done))
 	@echo starting netinstall... PLATFORM=$(PLATFORM) ARCH=$(ARCH) VER=$(VER) OPTS="$(OPTS)" NET_OPTS="$(NET_OPTS)" PKGS=$(PKGS) 
 	@echo using $(PKGS_FILES)
-	$(if $(findstring x86_64, $(PLATFORM)), , $(QEMU)) ./netinstall-cli-$(VER_NETINSTALL) $(OPTS) $(NET_OPTS) routeros-$(VER)-$(ARCH).npk $(PKGS_FILES)
+	$(if $(findstring x86_64, $(PLATFORM)), , $(QEMU)) ./netinstall-cli-$(VER_NETINSTALL) $(OPTS) $(NET_OPTS) routeros-$(VER)-$(ARCH).npk $(PKGS_FILES) $(PKGS_CUSTOM)
 
 service: all
 	while :; do $(MAKE) run ARCH=$(ARCH) VER=$(VER); done
