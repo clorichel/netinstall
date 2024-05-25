@@ -197,7 +197,7 @@ The specific file names needed for `netinstall` are generated automatically base
 | _option_ | _default_ |           |
 | -     | -             | -             |
 | ARCH | `arm` | **architecture name** must match `/system/resource`| 
-| PKGS | `wifi-qcom-ac zerotier` | **additional package name(s)**, without version/CPU, separated by spaces, invalid/missing packages are skipped
+| PKGS | `wifi-qcom-ac` | **additional package name(s)**, without version/CPU, separated by spaces, invalid/missing packages are skipped
 | CHANNEL | `stable` | same choices as `/system/package/update` i.e. **testing**, **long-term**|
 
  Each time `make` is run, the `CHANNEL`'s current version is checked via the web and sets `VER` automatically.
@@ -251,7 +251,9 @@ If used within a Mikrotik `/container` via the Dockerfile/registry, the defaults
 ### Branding and Non Standard Packages
 To use a branding package, `PKGS_CUSTOM` variable can be used with `/container/mount`.  The full container-relative path need to be used.  The value of `PKGS_CUSTOM` is simply appended to the end of the `netinstall` command, so any package with a valid full path can used.
    
-| PKGS_CUSTOM | _empty_ | full path to addtional packages, space seperated; path must match `/container/mount`
+| _option_ | _default_ |           |
+| -     | -             | -             |
+| PKGS_CUSTOM | _empty_ | full path _within container_ to addtional packages, space seperated; any paths must match `/container/mount`
 
 ### Uncommon Options
 This should not be changed, documented here for consistency.
