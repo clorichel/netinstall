@@ -90,33 +90,33 @@ https://help.mikrotik.com/docs/display/ROS/Container
 6. The `registry-url` is used to fetch "pull" images. Either DockerHub or GitHub Container Registry are supported.
  To see what's set, use `/container/config/print` to view the `registry-url` and `tmpdir` in use. 
 
- For DockerHub, the setting should look like this:
- ```
- /container config set registry-url=https://registry-1.docker.io tmpdir=disk1/pulls-docker
- ```
-    > **NOTE** 
-    > _Adjust the `disk1/` path as needed to use a non-flash disk_
+    For DockerHub, the setting should look like this:
+    ```
+    /container config set registry-url=https://registry-1.docker.io tmpdir=disk1/pulls-docker
+    ```
+        > **NOTE** 
+        > _Adjust the `disk1/` path as needed to use a non-flash disk_
 
 7. Create the container and start the container.  This assumes DockerHub is being used:
-    
- ```
- /container add remote-image=ammo74/netinstall:latest envlist=NETINSTALL interface=veth-netinstall logging=yes workdir=/app root-dir=disk1/root-netinstall
- ```
-    > Or, if using ghcr.io, instead of DockerHub, use `remote-image=ghcr.io/tikoci/netinstall` instead.
+        
+    ```
+    /container add remote-image=ammo74/netinstall:latest envlist=NETINSTALL interface=veth-netinstall logging=yes workdir=/app root-dir=disk1/root-netinstall
+    ```
+        > Or, if using ghcr.io, instead of DockerHub, use `remote-image=ghcr.io/tikoci/netinstall` instead.
 
-    > **NOTE**
-    >
-    > If you built your own `.tar` file using `docker buildx`, do not use `remote-image=` at all.  Instead, use `file=` that contains the path of the `.tar` image uploaded to the router.  The rest of the attributes to `/container add` are the same. 
+        > **NOTE**
+        >
+        > If you built your own `.tar` file using `docker buildx`, do not use `remote-image=` at all.  Instead, use `file=` that contains the path of the `.tar` image uploaded to the router.  The rest of the attributes to `/container add` are the same. 
 
- It will take about a minute to download and process the image file. 
- After the new container is expanded, it is indicated as a "stopped" status (instead of "expanding" or "error").  Status can be shown by using `/container/print`.  
-    
- If you see "error" status means something failed, likely disk or firewall issues. Worth it to check the `/logs/print` to where the process has failed. 
+    It will take about a minute to download and process the image file. 
+    After the new container is expanded, it is indicated as a "stopped" status (instead of "expanding" or "error").  Status can be shown by using `/container/print`.  
+        
+    If you see "error" status means something failed, likely disk or firewall issues. Worth it to check the `/logs/print` to where the process has failed. 
 
 8. Now Start Container!To try to start it, use:  
- ```
- /container/start [find tag~"netinstall" status="stopped"]   
- ```
+    ```
+    /container/start [find tag~"netinstall" status="stopped"]   
+    ```
 
     > **TIP**
     >
