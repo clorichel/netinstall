@@ -1,4 +1,5 @@
-# Automation for running Mikrotik `netinstall` using `make`
+# Mikrotik `netinstall` using `make`
+
 
 `netinstall` allows the "flashing" of Mikrotik devices, using a list of packages and various options.  While Mikrotik provides a Linux version of `netinstall`, running it involves many steps.  One of which is the downloading packages, for the right CPU, and the possibility some "extra-packages" are needed too.
 
@@ -7,9 +8,9 @@ Mikrotik has a good overview of `netinstall` and the overall process: https://he
 The source code and CI image building are stored in a public GitHub repo, and an OCI is also pushed to DockerHub by GitHub's Actions.  [Comments, complaints, and bugs](https://github.com/tikoci/netinstall/issues) are all welcome via GitHub Issues in the `tikoci/netinstall` [repo](https://github.com/tikoci/netinstall).  
 
 
-### Dual Use
+### Dual Use – `/container` or Linux Shell
 
-#### Just Automating `netinstall` on Linux desktop
+#### Just Automating `netinstall` from Linux
 
 The "script" is invoked by just calling `make` from the same directory, and by default that will start a netinstall using ARM packages, from "stable" channel, on an interface named "eth0". _This is often not the case, so variables on the network interface/IP will likely need to be changed from defaults._
 
@@ -155,10 +156,10 @@ https://help.mikrotik.com/docs/display/ROS/Container
 >
 > **TIP**
 >
-> It's possible to build the container image yourself into a `.tar`, instead of some of the steps below. See Mikrotik docs for [example Docker build steps](https://help.mikrotik.com/docs/display/ROS/Container#Container-c)buildanimageonPC) for Pi-Hole.  To start, use `git clone https://github.com/tikoci/netinstall.git`, to get the needed `Dockerfile` (and `Makefile` that contains the `netinstall` logic) to start `docker buildx` that well in a few steps get a `.tar` file locally to use on RouterOS – without using DockerHub, etc.
+> It's possible to build the container image yourself into a `.tar`, instead of some of the steps below. See Mikrotik docs for [example Docker build steps](https://help.mikrotik.com/docs/display/ROS/Container#Container-c\)buildanimageonPC) for Pi-Hole.  To start, use `git clone https://github.com/tikoci/netinstall.git`, to get the needed `Dockerfile` (and `Makefile` that contains the `netinstall` logic) to start `docker buildx` that well in a few steps get a `.tar` file locally to use on RouterOS – without using DockerHub, etc.
 >
 ---
-6. The `registry-url` is used to fetch "pull" images.  It must be set to use either DockerHub or GitHub Container Registry.
+6. The `registry-url` is used to fetch "pull" images. Either DockerHub or GitHub Container Registry are supported.
     To see what's set, use `/container/config/print` to view the `registry-url` and `tmpdir` in use. 
 
     So for DockerHub, the setting should look like this:
@@ -202,7 +203,7 @@ https://help.mikrotik.com/docs/display/ROS/Container
     > This can be done using a rather complex one-line that re-tries:
     > ```
     > /container { :local c [find tag~"netinstall" status!="error"]; stop $c; :retry {start $c; :if ([get $c status]!="running") do={:error "waiting"}} delay=5s max=100 }
-> ``` 
+    > ``` 
 
 
 ## Configuration Options and Variables
@@ -345,11 +346,7 @@ For offline use, while only one channel and one architecture can be used at a ti
 >The disadvantage is that is complex to understand unless one is already familiar with `Makefile`. It's a dense ~200-page manual (see "GNU make manual" in [HTML](https://www.gnu.org/software/make/manual/make.html) or [PDF](https://www.gnu.org/software/make/manual/make.pdf)).
   But since `make` deals well with state and files, it saves a lot of `if [ -f routeros* ] ... fi` stuff it takes to do the same as here in `bash`... 
 >
->And, just wanted to if `make` worked as a UNIX init process for the container:
-> ```
-> ## so make is the init
-> CMD ["make", "service"]
->```
+>
 >After trying this, it does seem like a nifty trick in the bag to get a little more organization out of what is mainly some busybox and `/bin/sh` commands.  In particular, how it deals with variables from EITHER env or program args.  Anyway, worked well enough for me to write it up and share – both the tool and approach.
 >
 >     
