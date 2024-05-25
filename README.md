@@ -43,36 +43,36 @@ https://help.mikrotik.com/docs/display/ROS/Container
 #### Steps
 
 1. Create `/interface/veth` interface:
- ```
- /interface veth add address=172.17.9.200/24 gateway=172.17.9.1 name=veth-netinstall
- /ip address add address=172.17.9.1/24 interface=veth-netinstall
- ```
+    ```
+    /interface veth add address=172.17.9.200/24 gateway=172.17.9.1 name=veth-netinstall
+    /ip address add address=172.17.9.1/24 interface=veth-netinstall
+    ```
 2. Create a separate bridge for `netinstall` use and add VETH to it:
- ```
- /interface bridge add name=bridge-netinstall
- /interface bridge port add bridge=bridge-netinstall interface=veth-netinstall
- ```
+    ```
+    /interface bridge add name=bridge-netinstall
+    /interface bridge port add bridge=bridge-netinstall interface=veth-netinstall
+    ```
 3. Add veth and physical port, _e.g._ "ether5", to the newly created bridge: 
- ```
- /interface bridge port add bridge=bridge-netinstall interface=ether5
- ```
- or, if the physical port is already in a bridge port, reassign it instead: `/interface bridge port [find interface=ether5] bridge=bridge-netinstall`
- > **NOTE** _Replace `ether5` with the physical ethernet port where the device needing `netinstall` is going to connect._    
+    ```
+    /interface bridge port add bridge=bridge-netinstall interface=ether5
+    ```
+    or, if the physical port is already in a bridge port, reassign it instead: `/interface bridge port [find interface=ether5] bridge=bridge-netinstall`
+    > **NOTE** _Replace `ether5` with the physical ethernet port where the device needing `netinstall` is going to connect._    
 
 4. Adjust the firewall so the container can download packages/netinstall binary from Mikrotik.  The exact changes needed can be specific.  But if using the default firewall, the easiest may be:
- ```
- /interface/list/member add list=LAN interface=bridge-netinstall 
- ```
+    ```
+    /interface/list/member add list=LAN interface=bridge-netinstall 
+    ```
     > **TIP**
     > Alternatively, you can /ip/firewall/filter or NAT rules on the containers subnet, to specifically allow VETH access to the internet.  Traffic between `netinstall` is forwarded, not routed, so only needed for outbound access from the container's IP.  **How?** - depends...   
 
 5. Create environment variables to control what `netinstall` behaviors:
- ```
- /container envs add key=ARCH name=NETINSTALL value=arm64
- /container envs add key=CHANNEL name=NETINSTALL value="testing"
- /container envs add key=PKGS name=NETINSTALL value="container zerotier wifi-qcom iot gps"
- /container envs add key=OPTS name=NETINSTALL value="-b -r" comment=" use EITHER -r to reset to defaults or -e for an empty config; use -b to remove any branding"
- ```
+    ```
+    /container envs add key=ARCH name=NETINSTALL value=arm64
+    /container envs add key=CHANNEL name=NETINSTALL value="testing"
+    /container envs add key=PKGS name=NETINSTALL value="container zerotier wifi-qcom iot gps"
+    /container envs add key=OPTS name=NETINSTALL value="-b -r" comment=" use EITHER -r to reset to defaults or -e for an empty config; use -b to remove any branding"
+    ```
     > **NOTE** 
     >
     > The following are used to set a specific version, instead of using `CHANNEL` to select the version, or to mix-and-match `netinstall` versions as needed:
@@ -87,13 +87,6 @@ https://help.mikrotik.com/docs/display/ROS/Container
     > /container envs add key=CLIENTIP name=NETINSTALL value="172.17.9.101"
     > ```
     > The underlying `netinstall`'s `-a <clientip>` and `-i <iface>` options are **mutually exclusive**. So if **both** `CLIENTIP` and `IFACE` are set, then `IFACE` is ignored, and "-i" with the `CLIENTIP` will be used in `make`.
-
----
->
-> **TIP**
->
-> To build the container image into a `.tar` instead... Generally, adapt the steps here with Mikrotik docs for [example Docker build steps](https://help.mikrotik.com/docs/display/ROS/Container#Container-c\)buildanimageonPC) for Pi-Hole.  To begin, use `git clone https://github.com/tikoci/netinstall.git` to download needed `Dockerfile` and `Makefile` (that contains the `netinstall` logic) to your PC & use these with  `docker buildx` as described in Mikrotik's doc, with a few more steps you get a `.tar` for use on RouterOS – without using DockerHub or GHCR.
->
 
 6. The `registry-url` is used to fetch "pull" images. Either DockerHub or GitHub Container Registry are supported.
  To see what's set, use `/container/config/print` to view the `registry-url` and `tmpdir` in use. 
@@ -140,6 +133,13 @@ https://help.mikrotik.com/docs/display/ROS/Container
     > ``` 
 
 
+## Building Container Locally
+ The container can able be built locally into a `.tar` needed on RouterOS to avoid needing to "pull" from DockerHub.  The specific steps depending on your environment.  Generally, adapt the steps here with Mikrotik docs for [example Docker build steps](https://help.mikrotik.com/docs/display/ROS/Container#Container-c\)buildanimageonPC) for Pi-Hole.
+ 
+ To begin, use `git clone https://github.com/tikoci/netinstall.git` to download needed `Dockerfile` and `Makefile` (that contains the `netinstall` logic) to your PC & use these with  `docker buildx` as described in Mikrotik's doc.  With a few more steps you get a `.tar` for use on RouterOS – without using DockerHub or GHCR.
+
+
+
 ## Configuration Options and Variables
 
 Let's start with some commons ones, directly from the `Makefile` script:
@@ -157,17 +157,17 @@ These can used in three ways:
    > **CAUTION** 
    >
    > Be careful to not change computed/complex variables & avoid trailing spaces etc.  And note `Makefiles` use tab indentations – Makefile will fail spaces are used if wrong.
->
+   >
 2. **Provided via `make` at CLI**, in same directory as Makefile.  For example, to start netinstall for mipsbe using the `VER` number directly, with some extra packages and `-a 192.168.88.7` option, and specific version `netinstall` to be used of 7.15rc3: 
- ```
- cd ~/netinstall
- sudo make -d ARCH=mipsbe VER=7.14.3 PKGS="iot gps ups" CLIENTIP=192.168.88.7 VER_NETINSTALL=7.15rc3
- ```
- which results in the following `netinstall` command line being used:
+    ```
+    cd ~/netinstall
+    sudo make -d ARCH=mipsbe VER=7.14.3 PKGS="iot gps ups" CLIENTIP=192.168.88.7 VER_NETINSTALL=7.15rc3
+    ```
+    which results in the following `netinstall` command line being used:
 
- ```
- ./netinstall-cli-7.15rc3 -b -r -a 192.168.88.7 routeros-7.14.3-mipsbe.npk iot-7.14.3-mipsbe.npk gps-7.14.3-mipsbe.npk ups-7.14.3-mipsbe.npk
- ```
+    ```
+    ./netinstall-cli-7.15rc3 -b -r -a 192.168.88.7 routeros-7.14.3-mipsbe.npk iot-7.14.3-mipsbe.npk gps-7.14.3-mipsbe.npk ups-7.14.3-mipsbe.npk
+    ```
 3. **Using environment variables**
  This is generally most useful with containers since environment variables are the typical configuration method.  
 **For Mikrotik RouterOS,** these are stored in `/container/env` and documented below.  
@@ -190,7 +190,7 @@ The specific file names needed for `netinstall` are generated automatically base
 
  By design, `CHANNEL` should be used to control the version used. 
 
-If `VER` or `VER_NETINSTALL` are provided, the string must be in the same form as published, like `7.15rc2` or `7.12.1`.  It **cannot** be a channel name like "stable".  But these variables can be any valid version, including older ones no longer on a channel.
+If `VER` (RouterOS) and/or `VER_NETINSTALL` (executable) are provided, the string must be in the same form as published, like `7.15rc2` or `7.12.1`.  It **cannot** be a channel name like "stable".  But these variables can be any valid version, including older ones no longer on a channel.
 
 `VER_NETINSTALL` is useful since sometimes `netinstall` has bugs or gains new features.  Generally, a newer netinstall can, and often should, be used to install older versions _i.e. some potential `OPTS` has changed over time..._ By default, only `CHANNEL` controls what version of `netinstall` will be used.  Meaning, even if `VER` is lower/older than `VER_NETINSTALL`, the latest "stable" `netinstall` for Linux will be used by default.  That is unless `VER_NETINSTALL` is specified explicitly
 
@@ -209,7 +209,7 @@ To get an **empty config**, change `-r` in the `OPTS` variable to a **`-e`** (bo
 | -     | -             | -             |
 | OPTS | `-b -r` | default is to "remove any branding" `-b` and "reset to default" `-r`, see [`netinstall` docs](https://help.mikrotik.com/docs/display/ROS/Netinstall#Netinstall-InstructionsforLinux)  |
 
-#### Network and System Configuration
+### Network and System Configuration
 
 Critical to `netinstall` working to flash a device is the networking is configured.  This is the trickiest part.  The `-i` or `-a` options must align with everything else, which corresponds to the `IFACE` **OR** `CLIENTIP`.
 
@@ -252,50 +252,47 @@ This should not be changed, documented here for consistency.
 
 #### Downloading Code to Run on Linux
 
-You can download the Makefile itself to a new directory, and then just run `make download` to see what, if any, options are needed.  But it may be easier to just use:
+You can download the Makefile itself to a new directory, But it may be easier to just use `git`, to make any future updates easier:
 
-```
-cd ~
-git clone https://github.com/tikoci/netinstall.git
-cd netinstall 
-make download
-```
+    ```
+    cd ~
+    git clone https://github.com/tikoci/netinstall.git
+    cd netinstall 
+    ```
+To test it, just run `make download` to which will download ARM packages, not NOT run netinstall.  
+
 
 #### Linux Usage Examples
 
-`make` needs to be run from the **same directory** as the `Makefile`.  To use the examples, the shell CWD must have the `Makefile`, so to start:
-```
-cd ~/netinstall
-make dump # to test 
-```
+The begin, `make` needs to be run from the **same directory** as the `Makefile`.  To use examples, the current directory in shell **must** be contain the `Makefile`.
+
 
 > **INFO**
 >
 > `sudo` must be used on most desktop Linux distros for any operation that starts running `netinstall`, since privileged ports are used.
-> But just downloading files, should not require `root` or `sudo` – just launching `netinstall` might on most Linux distros.
+> But just downloading files, should not require `root` or `sudo` – but running `netinstall` might on most Linux distros since it listens on a privileged port (69/udp).
 >
-
-* The runs netinstall using "testing" (`CHANNEL`) build with "mipsbe" (`ARCH`):
- ```sh
-  sudo make testing mipsbe 
- ```
 * Download files for "stable" on the "tile" CPU - but NOT run netinstall:
- ```sh
-  make stable tile download 
- ```
+    ```sh
+    make stable tile download 
+    ```
+* The runs netinstall using "testing" (`CHANNEL`) build with "mipsbe" (`ARCH`):
+    ```sh
+    sudo make testing mipsbe 
+    ```
 * To remove all cached downloaded files:
- ```sh
-  make clean
- ```
+    ```sh
+    make clean
+    ```
 * This command will continuously run the netinstall process in a loop.
- ```sh
-  sudo make service
- ```
+    ```sh
+    sudo make service
+    ```
 * All of `netinstall` options can be also provided using the `VAR=VAL` scheme after the `make`: 
- ```sh
-  make run ARCH=mipsbe VER=7.14.3 VER_NETINSTALL=7.15rc3 PKGS="wifi-qcom container zerotier" CLIENTIP=192.168.88.7 OPTS="-e" 
- ```
-  > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is **only** for extra-packages – the base `routeros*.npk` is always included (based on `ARCH` and `VER`).
+    ```sh
+    make run ARCH=mipsbe VER=7.14.3 VER_NETINSTALL=7.15rc3 PKGS="wifi-qcom container zerotier" CLIENTIP=192.168.88.7 OPTS="-e" 
+    ```
+    > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is **only** for extra-packages – the base `routeros*.npk` is always included (based on `ARCH` and `VER`).
 
 
 
