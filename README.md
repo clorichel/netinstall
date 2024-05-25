@@ -331,20 +331,20 @@ For offline use, while only one channel and one architecture can be used at a ti
 
     
 
->### Wait, a C/C++ `Makefile`, why not python or node?
->The aim here is to simplify the process of automatically downloading all the various packages and `netinstall` tool itself.  But also an experiment in approaches too.  Essentially the "code" is just an old-school UNIX `Makefile`, but beyond its history, it has some modern advantages:
-> *  `make` is very good at maintaining a directory with all the needed files, so it downloads only when needed efficiently.  
-> * By using [`.PHONY` targets](https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html), and non-traditional target names, _`make`_ this approach act more "script-like" than a C/C++ build tool.
-> * `make` natively supports taking variables from **either** via `make` arguments or environment variables.  This is pretty handy to allow some code to support containerization and plain CLI usage
-> * As a "script interpreter", `make` (plus busybox tools) is significantly smaller "runtime" than Python/Node/etc.  Before loading the packages, the container image is 6MB.  
->
->The disadvantage is that is complex to understand unless one is already familiar with `Makefile`. It's a dense ~200-page manual (see "GNU make manual" in [HTML](https://www.gnu.org/software/make/manual/make.html) or [PDF](https://www.gnu.org/software/make/manual/make.pdf)).
+### Wait, a C/C++ `Makefile`, why not python or node?
+The aim here is to simplify the process of automatically downloading all the various packages and `netinstall` tool itself.  But also an experiment in approaches too.  Essentially the "code" is just an old-school UNIX `Makefile`, but beyond its history, it has some modern advantages:
+ *  `make` is very good at maintaining a directory with all the needed files, so it downloads only when needed efficiently.  
+ * By using [`.PHONY` targets](https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html), and non-traditional target names, _`make`_ this approach act more "script-like" than a C/C++ build tool.
+ * `make` natively supports taking variables from **either** via `make` arguments or environment variables.  This is pretty handy to allow some code to support containerization and plain CLI usage
+ * As a "script interpreter", `make` (plus busybox tools) is significantly smaller "runtime" than Python/Node/etc.  Before loading the packages, the container image is 6MB.  
+
+The disadvantage is that is complex to understand unless one is already familiar with `Makefile`. It's a dense ~200-page manual (see "GNU make manual" in [HTML](https://www.gnu.org/software/make/manual/make.html) or [PDF](https://www.gnu.org/software/make/manual/make.pdf)).
  But since `make` deals well with state and files, it saves a lot of `if [ -f routeros* ] ... fi` stuff it takes to do the same as here in `bash`... 
->
->
->After trying this, it does seem like a nifty trick in the bag to get a little more organization out of what is mainly some busybox and `/bin/sh` commands.  In particular, how it deals with variables from EITHER env or program args.  Anyway, worked well enough for me to write it up and share – both the tool and approach.
->
->     
+
+
+After trying this, it does seem like a nifty trick in the bag to get a little more organization out of what is mainly some busybox and `/bin/sh` commands.  In particular, how it deals with variables from EITHER env or program args.  Anyway, worked well enough for me to write it up and share – both the tool and approach.
+
+     
 
 
 
