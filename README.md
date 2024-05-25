@@ -24,65 +24,6 @@ There is an associated `Dockerfile` to enable containerization, including using 
 
 
 
-## Linux Install and Usage
-
-#### Prerequisites
-* Linux device (or virtual machine) with ethernet 
-* Some familiarity with the UNIX shell and commands
-* `make`, `wget`, and `unzip` installed on your system.
-
-> **NOTE**
->
-> Each distro is different.  Only limited testing was done on Linux, specifically virtualized Ubuntu.  While very generic POSIX commands/tools are used, still possible to get errors that stop `make` from running.  Please report any issues found, including errors.
-
-#### Downloading Code to Run on Linux
-
-You can download the Makefile itself to a new directory, and then just run `make download` to see what, if any, options are needed.  But it may be easier to just use:
-
-```
-cd ~
-git clone https://github.com/tikoci/netinstall.git
-cd netinstall 
-make download
-```
-
-#### Linux Usage Examples
-
-`make` needs to be run from the **same directory** as the `Makefile`.  To use the examples, the shell CWD must have the `Makefile`, so to start:
-```
-cd ~/netinstall
-make dump # to test 
-```
-
-> **INFO**
->
-> `sudo` must be used on most desktop Linux distros for any operation that starts running `netinstall`, since privileged ports are used.
-> But just downloading files, should not requrie `root` or `sudo` – just launching `netinstall` might on most Linux distros.
->
-
-* The runs netinstall using "testing" (`CHANNEL`) build with "mipsbe" (`ARCH`):
-  ```sh
-  sudo make testing mipsbe 
-  ```
-* Download files for "stable" on the "tile" CPU - but NOT run netinstall:
-  ```sh
-  make stable tile download 
-  ```
-* To remove all cached downloaded files:
-  ```sh
-  make clean
-  ```
-* This command will continuously run the netinstall process in a loop.
-  ```sh
-  sudo make service
-  ```
-* All of `netinstall` options can be also provided can be using the `VAR=VAL` scheme after the `make`: 
-  ```sh
-  make run ARCH=mipsbe VER=7.14.3 VER_NETINSTALL=7.15rc3 PKGS="wifi-qcom container zerotier" CLIENTIP=192.168.88.7 OPTS="-e" 
-  ```
-  > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is only for extra-packages, it's assumed some routeros, based on `ARCH` and `VER` is needed.
-
-
 
 ## RouterOS `/container` Install
 
@@ -235,7 +176,7 @@ These can used in three ways:
     ```
 3. **Using environment variables**
    This is generally most useful with containers, since environment variables are the typical configuration method (other than rebuilding and redeploying).  For a Mikrotik, these are stored in `/container/env` and documented elsewhere here.  On Linux, you can use `export VER_NETINSTALL=7.14.2` in a `.profile`, if you wanted some options to persist at a Linux shell, i.e. to avoid always having to provide them everytime like `make VER_NETINSTALL=7.14.2`.  Additionally, you can just edit the variable directly in the Makefile too – but Makefile get updated, changes would have be merged.  
-    
+
 
 ### Basic Settings
 
@@ -299,6 +240,68 @@ This should not be changed, documented here for consistency.
 | URLVER | https://upgrade.mikrotik.com/routeros/NEWESTa7 | URL used to determine what version is "stable"/etc |
 | PKGS_FILES | _computed_ | _read-only_, in logs shows the resolved "extra-package" to be installed
 | PLATFORM | _computed from `uname -m`_ | _internal_, used to determine if emulation is needed to run `netinstall` if set to x86_64 will the skip `QEMU` emulation step – does not affect packages to be _installed_ as those are controlled by `ARCH`.
+
+
+
+## Linux Install and Usage
+
+#### Prerequisites
+* Linux device (or virtual machine) with ethernet 
+* Some familiarity with the UNIX shell and commands
+* `make`, `wget`, and `unzip` installed on your system.
+
+> **NOTE**
+>
+> Each distro is different.  Only limited testing was done on Linux, specifically virtualized Ubuntu.  While very generic POSIX commands/tools are used, still possible to get errors that stop `make` from running.  Please report any issues found, including errors.
+
+#### Downloading Code to Run on Linux
+
+You can download the Makefile itself to a new directory, and then just run `make download` to see what, if any, options are needed.  But it may be easier to just use:
+
+```
+cd ~
+git clone https://github.com/tikoci/netinstall.git
+cd netinstall 
+make download
+```
+
+#### Linux Usage Examples
+
+`make` needs to be run from the **same directory** as the `Makefile`.  To use the examples, the shell CWD must have the `Makefile`, so to start:
+```
+cd ~/netinstall
+make dump # to test 
+```
+
+> **INFO**
+>
+> `sudo` must be used on most desktop Linux distros for any operation that starts running `netinstall`, since privileged ports are used.
+> But just downloading files, should not requrie `root` or `sudo` – just launching `netinstall` might on most Linux distros.
+>
+
+* The runs netinstall using "testing" (`CHANNEL`) build with "mipsbe" (`ARCH`):
+  ```sh
+  sudo make testing mipsbe 
+  ```
+* Download files for "stable" on the "tile" CPU - but NOT run netinstall:
+  ```sh
+  make stable tile download 
+  ```
+* To remove all cached downloaded files:
+  ```sh
+  make clean
+  ```
+* This command will continuously run the netinstall process in a loop.
+  ```sh
+  sudo make service
+  ```
+* All of `netinstall` options can be also provided can be using the `VAR=VAL` scheme after the `make`: 
+  ```sh
+  make run ARCH=mipsbe VER=7.14.3 VER_NETINSTALL=7.15rc3 PKGS="wifi-qcom container zerotier" CLIENTIP=192.168.88.7 OPTS="-e" 
+  ```
+  > `OPTS` is ace-in-the-hole since the value it just appended to `netinstall`, this can be used to control important stuff like `-e` (empty config after netinstall) vs `-r` (reset to defaults) options, or any valid option to netinstall.  `PKGS` is only for extra-packages, it's assumed some routeros, based on `ARCH` and `VER` is needed.
+
+
 
 ## `make` arguments for CLI (or Docker `CMD`)
 
