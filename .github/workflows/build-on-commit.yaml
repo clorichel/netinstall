@@ -6,7 +6,7 @@ on:
     paths:
       - Dockerfile
       - Makefile
-      - '.github/workflows/**'
+      - '.github/workflows/build-on-commit'
 env:
   PLATFORMS: linux/arm/v7,linux/arm64,linux/amd64
 
