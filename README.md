@@ -112,14 +112,14 @@ Instructions below assume a non-flash disk is at `disk1/` and `ether5` is where 
     ```
     /container/start [find tag~"netinstall"]   
     ```
-
-> **TIP**
->
-> If you have any issues, first check the logs:
-> ```
->   /log print proplist=time,message where topics~"container"
-> ```
->
+    
+    > **TIP**
+    >
+    > If you have any issues, first check the logs:
+    > ```
+    >   /log print proplist=time,message where topics~"container"
+    > ```
+    >
 
 
 ### Additional `/container/env` options
