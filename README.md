@@ -41,7 +41,7 @@ https://help.mikrotik.com/docs/display/ROS/Container
 
 Instructions below assume a non-flash disk is at `disk1/` and `ether5` is where the device to be "netinstall'ed" is connected.  Adjust examples needed.
 
-1. Create `/interface/veth` interface:
+1. Create `/interface/veth` interface/IP:
     ```
     /interface veth add address=172.17.9.200/24 gateway=172.17.9.1 name=veth-netinstall
     /ip address add address=172.17.9.1/24 interface=veth-netinstall
@@ -82,7 +82,7 @@ Instructions below assume a non-flash disk is at `disk1/` and `ether5` is where 
 
     For DockerHub, the `registry-url` setting should be `https://registry-1.docker.io`, if not set use:
     ```
-    /container config set registry-url=https://registry-1.docker.io tmpdir=disk1/pulls-docker
+    /container config set registry-url=https://registry-1.docker.io tmpdir=disk1/pulls
     ```
     
     > **NOTE** 
@@ -110,8 +110,17 @@ Instructions below assume a non-flash disk is at `disk1/` and `ether5` is where 
 
 8. Now start container! Use:  
     ```
-    /container/start [find tag~"netinstall" status="stopped"]   
+    /container/start [find tag~"netinstall"]   
     ```
+
+> **TIP**
+>
+> If you have any issues, first check the logs:
+> ```
+>   /log print proplist=time,message where topics~"container"
+> ```
+>
+
 
 ### Additional `/container/env` options
 
