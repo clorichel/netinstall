@@ -146,6 +146,11 @@ While these variables control networking, they shuld **not** be needed with `/co
  
  To begin, use `git clone https://github.com/tikoci/netinstall.git` to download needed `Dockerfile` and `Makefile` (that contains the `netinstall` logic) to your PC & use these with  `docker buildx` as described in Mikrotik's doc.  With a few more steps you get a `.tar` for use on RouterOS – without using DockerHub or GHCR.
 
+ > **TIP**
+ >
+ > See [example/builder/README.md](example/builder/README.md) for a sample `Dockerfile` to build your `tar` image.
+ >
+
 
 
 ## Configuration Options and Variables
