@@ -42,6 +42,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
   docker:
+    runs-on: ubuntu-latest
     steps:
       - name: Add README to Docker Hub
         uses: peter-evans/dockerhub-description@v4
