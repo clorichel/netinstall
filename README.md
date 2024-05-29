@@ -148,7 +148,7 @@ While these variables control networking, they shuld **not** be needed with `/co
 
  > **TIP**
  >
- > See [example/builder/README.md](example/builder/README.md) for a sample `Dockerfile` to build your `tar` image.
+ > See [example/builder/README.md](https://github.com/tikoci/netinstall/tree/master/examples/builder) for a sample `Dockerfile` to build your `tar` image.
  >
 
 

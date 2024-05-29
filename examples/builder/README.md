@@ -30,6 +30,6 @@ If you need to build the `Dockerfile`, for one platform just provide the RouterO
 Valid architecture values are "arm64", "arm", and "x86" - these values apply to the /container - the container can contain packages for **any** architecture. 
 
 
-> [!INFO]
+> [!NOTE]
 >
-> `./build-multi.sh` is the main builder, but this will create one "multi-platform" image - this may not be ideal here.  _i.e._ file be huge if all packages for all platforms were used. 
+> `./build-multi.sh` is the main builder - it does the "heavy lifting" to _actually_ build the packages from `./build.sh`.  But using all three support platforms in one "multi-platform" image is far from idea here.  _i.e._ The image file be **huge** if _all packages_ for _all platforms_ were used with the `make download` in the example. 
