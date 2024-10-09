@@ -40,7 +40,7 @@ service: all
 download: all
 	@echo use 'make' to run netinstall after connecting $(IFACE) or $(CLIENTIP) to router
 
-all: $(foreach arch,$(ARCH),routeros-$(VER)-$(arch).npk netinstall-cli-$(VER_NETINSTALL) all_packages-$(arch)-$(VER).zip)
+all: $(foreach somearch,$(ARCH),routeros-$(VER)-$(somearch).npk netinstall-cli-$(VER_NETINSTALL) all_packages-$(somearch)-$(VER).zip)
 	@echo finished download ARCH=$(ARCH) VER=$(VER) PKGS=$(PKGS) PLATFORM=$(PLATFORM)
 
 dump: 
